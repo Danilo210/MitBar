@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#15111d">
+  <meta name="description" content="MitBar: um pub virtual 3D para conhecer pessoas, conversar por voz de proximidade e fazer videochamadas consensuais. Exclusivo para maiores de 18 anos.">
+  <title>MitBar — Seu lugar para conversar</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <style>body{background:#100e17;color:#fff;margin:0}</style>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="importmap">
+    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js"}}
+  </script>
+</head>
+<body>
+  <canvas id="game" aria-label="Ambiente virtual tridimensional MitBar"></canvas>
+  <div id="scene-vignette" aria-hidden="true"></div>
+
+  <main id="entrance" class="entrance">
+    <div class="entry-shell">
+      <section class="intro-side" aria-label="Apresentação do MitBar">
+        <div class="brand large"><span class="brand-mark">M<span>✦</span></span><span>MitBar<span class="brand-period">.</span></span></div>
+        <div class="eyebrow"><i></i> PUB VIRTUAL · SOCIAL 3D</div>
+        <h1>Entre como você é.<br><em>Conecte-se</em> de verdade.</h1>
+        <p>Um espaço virtual para conhecer gente nova, explorar três ambientes e puxar uma conversa — basta chegar perto.</p>
+        <div class="intro-perks">
+          <div><span class="perk-icon">◉</span><span><b>Voz por proximidade</b><small>Converse com quem está ao seu lado</small></span></div>
+          <div><span class="perk-icon">▣</span><span><b>Vídeo por convite</b><small>Só acontece se a outra pessoa aceitar</small></span></div>
+          <div><span class="perk-icon">⌘</span><span><b>Um bar, três ambientes</b><small>Pub · Lounge · Sky Bar</small></span></div>
+        </div>
+        <div class="entry-bottom">✦ FEITO PARA ENCONTROS ESPONTÂNEOS <span>·</span> 18+</div>
+      </section>
+
+      <section class="entry-card" aria-label="Cadastro de acesso">
+        <div class="entry-card-top"><span class="entry-step">01 / PERSONALIZE SUA ENTRADA</span><span class="pill">18+ SOMENTE</span></div>
+        <h2>Seu próximo encontro<br>começa aqui <span>✦</span></h2>
+        <p class="subheading">Sem senha, sem complicações. Crie seu personagem e entre no pub.</p>
+        <form id="join-form" novalidate>
+          <div class="field-row two">
+            <label>Seu nome <input id="real-name" autocomplete="name" maxlength="64" placeholder="Como podemos chamar você?" required></label>
+            <label>Sua idade <input id="age" inputmode="numeric" type="number" min="18" max="120" placeholder="18+" required></label>
+          </div>
+          <label>Seu e-mail <input id="email" autocomplete="email" type="email" maxlength="160" placeholder="voce@email.com" required></label>
+          <p class="privacy"><span>◈</span> Seu e-mail não aparece para outras pessoas e <strong>não será usado para enviar propaganda.</strong></p>
+          <label>Nome do personagem <input id="nick" maxlength="22" placeholder="Como você quer ser conhecido(a)?" required></label>
+          <div class="character-heading"><span>SEU PERSONAGEM</span><small>Escolha seu estilo</small></div>
+          <div class="custom-layout">
+            <div class="preview-wrap"><canvas id="avatar-preview" aria-label="Prévia 3D do seu personagem"></canvas><span>VISUALIZAÇÃO 3D</span></div>
+            <div class="avatar-controls">
+              <span class="option-label">Gênero</span>
+              <div class="gender-choice" role="group" aria-label="Gênero do personagem">
+                <button type="button" data-gender="masculino">Masculino</button>
+                <button type="button" data-gender="feminino">Feminino</button>
+                <button type="button" data-gender="neutro" class="active">Neutro</button>
+              </div>
+              <span class="option-label">Tom de pele</span><div id="skin-picker" class="swatches"></div>
+              <span class="option-label">Cor do cabelo</span><div id="hair-picker" class="swatches"></div>
+              <span class="option-label">Cor da roupa</span><div id="outfit-picker" class="swatches"></div>
+              <label class="style-label">Cabelo <select id="hair-style"><option value="curto">Curto</option><option value="medio">Médio</option><option value="longo">Longo</option><option value="cacheado">Cacheado</option><option value="raspado">Raspado</option></select></label>
+            </div>
+          </div>
+          <p id="join-error" class="form-error" role="alert" hidden></p>
+          <button id="enter-button" class="primary-button" type="submit">ENTRAR NO MITBAR <span>→</span></button>
+          <div class="terms">Ao entrar, você declara ter 18 anos ou mais, concorda em respeitar as outras pessoas e entende que o acesso é sem verificação documental de idade.</div>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <div id="hud" class="hud hidden">
+    <header class="hud-top">
+      <div class="game-brand"><span class="brand-mark">M<span>✦</span></span><div><b>MitBar<span class="brand-period">.</span></b><small>SEU LUGAR PARA CONVERSAR</small></div></div>
+      <div class="top-actions">
+        <div class="population"><span class="live-dot"></span><strong id="online-number">1</strong> <span>ONLINE</span></div>
+        <div class="floor-label"><span>⌁</span><b id="floor-name">Térreo · Pub</b></div>
+        <button id="help-button" class="icon-button" title="Como jogar" aria-label="Como jogar">?</button>
+      </div>
+    </header>
+    <div class="hud-left">
+      <div class="room-info"><div class="room-caps">VOCÊ ESTÁ EM</div><strong id="location-label">PUB SOCIAL</strong><p>Explore o ambiente e aproxime-se para conversar.</p></div>
+      <div id="connection-status" class="status-chip"><span class="live-dot"></span> Conectado</div>
+    </div>
+    <div id="proximity-badge" class="proximity-badge"><span>◎</span><div><b>VOZ POR PROXIMIDADE</b><small id="nearby-label">Procurando pessoas por perto...</small></div></div>
+    <div id="elevator-tip" class="elevator-tip hidden"><span>↟</span><div><strong>Escadas / elevador</strong><small>Troque de andar usando os botões abaixo.</small></div></div>
+    <div id="floor-panel" class="floor-panel hidden">
+      <span>ESCOLHA UM ANDAR</span>
+      <button type="button" data-floor="2">03 <b>SKY BAR</b> ↑</button>
+      <button type="button" data-floor="1">02 <b>LOUNGE</b> ↑</button>
+      <button type="button" data-floor="0">01 <b>PUB</b> ↑</button>
+      <button type="button" id="floor-close" class="subtle">Fechar ✕</button>
+    </div>
+    <div class="hud-bottom">
+      <div class="control-hints"><div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> <span>MOVER</span></div><div><span class="mouse-icon">◉</span> <span>ARRASTAR CÂMERA</span></div><div><kbd>E</kbd> <span>TROCAR ANDAR</span></div></div>
+      <div class="bottom-controls">
+        <button id="audio-enable" class="audio-prompt hidden">↗ Ativar áudio</button>
+        <button id="mic-button" class="hud-button on" title="Ligar ou desligar o próprio microfone"><span id="mic-icon">♩</span><span id="mic-text">Microfone ligado</span></button>
+        <button id="floor-button" class="hud-button">↟ <span>Andares</span></button>
+        <button id="leave-button" class="hud-button secondary" title="Sair do pub">↩ <span>Sair</span></button>
+      </div>
+    </div>
+    <div class="mobile-controls">
+      <div id="joystick" class="joystick"><div id="joystick-thumb" class="joystick-thumb"></div></div>
+      <div class="mobile-action"><button id="mobile-floor" aria-label="Trocar de andar">↟</button><small>ANDARES</small></div>
+    </div>
+  </div>
+
+  <aside id="profile-panel" class="profile-panel hidden" aria-label="Informações de outro personagem">
+    <button id="profile-close" class="close-button" aria-label="Fechar">×</button>
+    <span class="panel-caption">PERFIL DO PERSONAGEM</span>
+    <div class="profile-icon">✦</div>
+    <h3 id="profile-nick">Nome</h3>
+    <div class="profile-detail"><span>GÊNERO</span><b id="profile-gender">Neutro</b></div>
+    <div class="profile-detail"><span>DISTÂNCIA</span><b id="profile-distance">Próximo</b></div>
+    <div class="profile-notice">A pessoa só verá seu convite de vídeo se você enviar. A câmera sempre exige permissão.</div>
+    <button id="profile-call" class="primary-button">▣ CONVIDAR PARA VÍDEO</button>
+    <button id="profile-mute" class="outline-button">♩ Silenciar esta pessoa</button>
+    <div class="profile-minor"><button id="profile-block">Bloquear</button><button id="profile-report">Denunciar</button></div>
+  </aside>
+
+  <div id="incoming-modal" class="modal-backdrop hidden"><div class="modal">
+    <div class="modal-symbol">▣</div><span class="modal-caption">CONVITE PARA VIDEOCHAMADA</span>
+    <h3><span id="caller-name"></span> quer conversar por vídeo.</h3>
+    <p>Você decide. Sua câmera e seu microfone só serão acessados após aceitar.</p>
+    <div class="modal-buttons"><button id="reject-call" class="outline-button">RECUSAR</button><button id="accept-call" class="primary-button">ACEITAR CHAMADA</button></div>
+  </div></div>
+  <div id="video-window" class="video-window hidden">
+    <div class="video-head"><b>✦ MITBAR · VIDEOCHAMADA</b><span id="call-status">Conectando...</span></div>
+    <video id="remote-video" autoplay playsinline></video>
+    <video id="local-video" autoplay playsinline muted></video>
+    <div class="video-controls"><button id="video-mic" title="Desligar seu microfone">♩</button><button id="video-cam" title="Desligar sua câmera">▣</button><button id="end-call" class="hangup">✕ Encerrar</button></div>
+  </div>
+  <div id="help-modal" class="modal-backdrop hidden"><div class="modal help-modal">
+    <button id="help-close" class="close-button" aria-label="Fechar">×</button>
+    <span class="modal-caption">COMO JOGAR</span><h3>Bem-vindo ao MitBar!</h3>
+    <p><b>Computador:</b> W, A, S, D ou setas para caminhar. Arraste o mouse para girar a câmera. Clique em outro personagem para abrir seu perfil.</p>
+    <p><b>Celular:</b> use o controle virtual para andar, deslize o dedo na tela para girar a câmera e toque nos personagens.</p>
+    <p><b>Voz:</b> seu microfone é compartilhado somente com pessoas a até cerca de 11 metros de você, no mesmo andar. Você pode desligá-lo a qualquer momento.</p>
+    <p><b>Andares:</b> caminhe até o elevador iluminado, no canto do pub, e toque em Andares (ou pressione E) para subir ou descer.</p>
+    <p><b>Segurança:</b> denuncie ou bloqueie interações desconfortáveis. Não forneça dados pessoais no áudio. As denúncias deste protótipo são registradas em logs, não em um painel de moderação.</p>
+    <button id="help-understood" class="primary-button">ENTENDI</button>
+  </div></div>
+  <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
